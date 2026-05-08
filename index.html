@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>대상정보통신 AS 관리 시스템</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f7f5f0;--panel:#ffffff;--navy:#1a2744;--navy2:#243358;
+  --gold:#c8922a;--gold2:#e8b04a;--text:#1a2744;--muted:#6b7280;
+  --line:#e5ddd0;--red:#dc2626;--green:#16a34a;--blue:#2563eb;
+  --shadow:0 4px 24px rgba(26,39,68,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── HEADER ── */
+.site-header{background:var(--navy);border-bottom:3px solid var(--gold);padding:0 28px;height:56px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;}
+.site-logo{font-size:20px;font-weight:900;color:#fff;letter-spacing:-.3px;}
+.site-logo span{color:var(--gold);}
+.site-sub{font-size:11px;color:rgba(255,255,255,.4);margin-left:4px;}
+
+/* ── TABS ── */
+.tab-bar{background:var(--navy2);display:flex;padding:0 28px;}
+.tab-btn{padding:12px 22px;font-size:13px;font-weight:700;color:rgba(255,255,255,.5);border:none;background:transparent;cursor:pointer;border-bottom:3px solid transparent;font-family:'Noto Sans KR',sans-serif;transition:.2s;}
+.tab-btn:hover{color:rgba(255,255,255,.8);}
+.tab-btn.active{color:#fff;border-bottom-color:var(--gold);}
+.tab-panel{display:none;}.tab-panel.active{display:block;}
+
+/* ── CONTAINER ── */
+.container{max-width:1100px;margin:0 auto;padding:24px 20px 60px;}
+
+/* ── CARDS ── */
+.card{background:var(--panel);border-radius:14px;box-shadow:var(--shadow);border:1px solid var(--line);padding:20px;margin-bottom:16px;}
+.card-title{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+
+/* ── FORM ── */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+.form-input{border:1.5px solid var(--line);border-radius:8px;padding:9px 11px;font-family:'Noto Sans KR',sans-serif;font-size:13px;color:var(--text);background:var(--bg);outline:none;transition:.15s;}
+.form-input:focus{border-color:var(--gold);background:#fff;}
+.form-textarea{resize:vertical;min-height:70px;}
+.form-select{cursor:pointer;}
+
+/* ── BUTTONS ── */
+.btn{padding:9px 18px;border-radius:9px;border:none;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:6px;}
+.btn:active{transform:scale(.97);}
+.btn-navy{background:var(--navy);color:#fff;}
+.btn-navy:hover{background:var(--navy2);}
+.btn-gold{background:var(--gold);color:#fff;}
+.btn-gold:hover{background:var(--gold2);}
+.btn-green{background:var(--green);color:#fff;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-outline{background:transparent;border:1.5px solid var(--line);color:var(--muted);}
+.btn-outline:hover{border-color:var(--navy);color:var(--navy);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+
+/* ── 제품 행 ── */
+.product-table{width:100%;border-collapse:collapse;margin-bottom:10px;}
+.product-table th{background:var(--navy);color:#fff;font-size:11px;font-weight:700;padding:8px 10px;text-align:left;}
+.product-table td{padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:middle;}
+.product-table tr:last-child td{border-bottom:none;}
+.product-table .pinput{width:100%;border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-family:'Noto Sans KR',sans-serif;font-size:13px;background:var(--bg);}
+.product-table .pinput:focus{outline:none;border-color:var(--gold);background:#fff;}
+.del-btn{width:26px;height:26px;border:1px solid var(--line);border-radius:5px;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;}
+.del-btn:hover{background:#fee2e2;border-color:var(--red);color:var(--red);}
+
+/* ── 목록 ── */
+.repair-list{display:flex;flex-direction:column;gap:8px;}
+.repair-item{background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;transition:.15s;}
+.repair-item:hover{border-color:var(--gold);}
+.repair-item.received{border-color:var(--green);background:#f0fff4;}
+.repair-item.received .ri-status{background:rgba(22,163,74,.12);color:var(--green);}
+.ri-info{flex:1;min-width:0;}
+.ri-main{font-size:14px;font-weight:700;}
+.ri-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.ri-status{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(200,146,42,.12);color:var(--gold);white-space:nowrap;}
+.ri-actions{display:flex;gap:6px;flex-shrink:0;}
+
+/* ── 필터 바 ── */
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.filter-bar input,.filter-bar select{padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;font-family:'Noto Sans KR',sans-serif;font-size:13px;outline:none;background:var(--panel);}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--gold);}
+
+/* ── 견적서 합계 ── */
+.estimate-summary{background:#f8f5f0;border-radius:10px;padding:14px 16px;margin-top:12px;}
+.est-row{display:flex;justify-content:space-between;font-size:14px;padding:4px 0;}
+.est-row.total{font-size:16px;font-weight:900;color:var(--navy);border-top:1.5px solid var(--line);margin-top:6px;padding-top:10px;}
+.est-val{font-family:'DM Mono',monospace;font-weight:700;}
+
+/* ── 공급자 설정 ── */
+.supplier-box{background:#f8f5f0;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px;}
+.supplier-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* ── 토스트 ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--navy);color:#fff;padding:11px 20px;border-radius:100px;font-size:13px;font-weight:700;opacity:0;transition:.3s;z-index:400;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── 인쇄 ── */
+#printArea{display:none;}
+@media print{
+  body>*{display:none!important;}
+  #printArea{display:block!important;font-family:'맑은 고딕','Noto Sans KR',sans-serif;font-size:9pt;color:#000;padding:15mm 12mm;}
+  @page{size:A4;margin:0;}
+}
+.pc{font-family:'맑은 고딕','Noto Sans KR',sans-serif;font-size:10pt;color:#000;}
+.pc-title{text-align:center;font-size:22pt;font-weight:900;margin-bottom:16px;letter-spacing:2px;}
+.pc-logo{float:right;font-size:18pt;font-weight:900;border:2px solid #000;padding:2px 8px;letter-spacing:-1px;}
+.pc table{width:100%;border-collapse:collapse;}
+.pc td,.pc th{border:1px solid #000;padding:6px 8px;font-size:9.5pt;vertical-align:middle;}
+.pc .label{background:#e8e8e8;font-weight:700;white-space:nowrap;width:70px;}
+.pc .section-title{background:#1a2744;color:#fff;font-weight:700;text-align:center;font-size:10pt;}
+.pc-clearfix::after{content:"";display:table;clear:both;}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-logo">대상<span>정보통신</span></div>
+  <div class="site-sub">AS 관리 시스템</div>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('repair',this)">🔧 수리의뢰서</button>
+  <button class="tab-btn" onclick="switchTab('estimate',this)">📋 견적서</button>
+</div>
+
+<!-- ══════════════ 탭1: 수리의뢰서 ══════════════ -->
+<div id="tab-repair" class="tab-panel active">
+<div class="container">
+
+  <!-- 입력 폼 -->
+  <div class="card">
+    <div class="card-title">🔧 수리의뢰서 작성</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">출고일자 *</label>
+        <input class="form-input" type="date" id="r_outDate">
+      </div>
+      <div class="form-group">
+        <label class="form-label">입고날짜</label>
+        <input class="form-input" type="date" id="r_inDate">
+      </div>
+      <div class="form-group">
+        <label class="form-label">입고 가맹점명 (내부용)</label>
+        <input class="form-input" type="text" id="r_storeName" placeholder="가맹점명">
+      </div>
+      <div class="form-group">
+        <label class="form-label">연락처</label>
+        <input class="form-input" type="text" id="r_tel" placeholder="051-000-0000">
+      </div>
+    </div>
+
+    <!-- 제품 목록 -->
+    <div style="margin-top:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:700;color:var(--muted);">제품 목록 (모델명 · 제품번호 · 불량내역)</span>
+        <button class="btn btn-outline btn-sm" onclick="addProductRow()">+ 행 추가</button>
+      </div>
+      <table class="product-table" id="productTable">
+        <thead><tr>
+          <th style="width:18%">모델명</th>
+          <th style="width:22%">제품번호</th>
+          <th>불량내역</th>
+          <th style="width:36px"></th>
+        </tr></thead>
+        <tbody id="productBody"></tbody>
+      </table>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-navy" onclick="saveRepair()">💾 저장</button>
+      <button class="btn btn-gold" onclick="printRepair()">🖨️ 수리의뢰서 출력</button>
+      <button class="btn btn-outline" onclick="clearRepairForm()">초기화</button>
+    </div>
+  </div>
+
+  <!-- 목록 -->
+  <div class="card">
+    <div class="card-title">📋 수리의뢰 목록</div>
+    <div class="filter-bar">
+      <input type="text" id="searchKeyword" placeholder="가맹점명·모델명 검색" oninput="renderRepairList()">
+      <select id="filterStatus" onchange="renderRepairList()">
+        <option value="">전체</option>
+        <option value="pending">입고 대기</option>
+        <option value="received">입고 완료</option>
+      </select>
+      <button class="btn btn-outline btn-sm" onclick="exportRepairExcel()">📥 엑셀 저장</button>
+    </div>
+    <div class="repair-list" id="repairList">
+      <div style="text-align:center;padding:32px;color:var(--muted);">저장된 수리의뢰서가 없습니다.</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════ 탭2: 견적서 ══════════════ -->
+<div id="tab-estimate" class="tab-panel">
+<div class="container">
+
+  <!-- 공급자 설정 -->
+  <div class="supplier-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span style="font-size:12px;font-weight:700;color:var(--muted);">공급자 정보 (저장됩니다)</span>
+      <button class="btn btn-navy btn-sm" onclick="saveSupplier()">💾 저장</button>
+    </div>
+    <div class="supplier-grid">
+      <div class="form-group"><label class="form-label">상호명</label><input class="form-input" id="sup_name" value="대상정보통신"></div>
+      <div class="form-group"><label class="form-label">사업자번호</label><input class="form-input" id="sup_bizno" value="607-10-86981"></div>
+      <div class="form-group"><label class="form-label">대표자</label><input class="form-input" id="sup_ceo" value="김진선"></div>
+      <div class="form-group"><label class="form-label">연락처</label><input class="form-input" id="sup_tel" value="051-903-4561"></div>
+      <div class="form-group full"><label class="form-label">주소</label><input class="form-input" id="sup_addr" value="부산시 남구 동명로 146번길 123"></div>
+      <div class="form-group"><label class="form-label">은행명</label><input class="form-input" id="sup_bank" placeholder="부산은행"></div>
+      <div class="form-group"><label class="form-label">계좌번호</label><input class="form-input" id="sup_account" placeholder="000-00-000000"></div>
+      <div class="form-group"><label class="form-label">예금주</label><input class="form-input" id="sup_holder" placeholder="대상정보통신"></div>
+    </div>
+  </div>
+
+  <!-- 견적서 작성 -->
+  <div class="card">
+    <div class="card-title">📋 견적서 작성</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">견적일자 *</label>
+        <input class="form-input" type="date" id="e_date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">유효기간</label>
+        <input class="form-input" type="text" id="e_valid" placeholder="견적일로부터 30일">
+      </div>
+      <div class="form-group">
+        <label class="form-label">가맹점(수신자) *</label>
+        <input class="form-input" type="text" id="e_client" placeholder="상호명">
+      </div>
+      <div class="form-group">
+        <label class="form-label">담당자</label>
+        <input class="form-input" type="text" id="e_manager" placeholder="담당자명">
+      </div>
+      <div class="form-group full">
+        <label class="form-label">비고</label>
+        <input class="form-input" type="text" id="e_note" placeholder="특이사항">
+      </div>
+    </div>
+
+    <!-- 품목 -->
+    <div style="margin-top:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:700;color:var(--muted);">품목</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <label style="font-size:12px;font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer;">
+            <input type="radio" name="vatMode" value="include" id="vatInclude" onchange="calcEstimate()"> 부가세 포함
+          </label>
+          <label style="font-size:12px;font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer;">
+            <input type="radio" name="vatMode" value="exclude" id="vatExclude" checked onchange="calcEstimate()"> 부가세 별도
+          </label>
+          <button class="btn btn-outline btn-sm" onclick="addEstimateRow()">+ 행 추가</button>
+        </div>
+      </div>
+      <table class="product-table" id="estimateTable">
+        <thead><tr>
+          <th>품명</th>
+          <th style="width:60px">수량</th>
+          <th style="width:110px">단가</th>
+          <th style="width:110px">금액</th>
+          <th style="width:36px"></th>
+        </tr></thead>
+        <tbody id="estimateBody"></tbody>
+      </table>
+    </div>
+
+    <!-- 합계 -->
+    <div class="estimate-summary">
+      <div class="est-row"><span>공급가액</span><span class="est-val" id="sumSupply">0원</span></div>
+      <div class="est-row"><span>부가세 (10%)</span><span class="est-val" id="sumVat">0원</span></div>
+      <div class="est-row total"><span>합계</span><span class="est-val" id="sumTotal">0원</span></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="printEstimate()">🖨️ 견적서 출력</button>
+      <button class="btn btn-outline" onclick="clearEstimateForm()">초기화</button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- 인쇄 영역 -->
+<div id="printArea"></div>
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+// ── Firebase 초기화 ──
+const firebaseConfig = {
+  apiKey: "AIzaSyCtcpBNr9lSwVSCI9xiJUb947n4gUPzR2c",
+  authDomain: "daesang-as.firebaseapp.com",
+  databaseURL: "https://daesang-as-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "daesang-as",
+  storageBucket: "daesang-as.firebasestorage.app",
+  messagingSenderId: "1003933998008",
+  appId: "1:1003933998008:web:cfd41be7aa36fada564d4d"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let repairs = [];
+let repairIdCounter = 0;
+let toastTimer = null;
+
+// ── 탭 전환 ──
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── 토스트 ──
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ════════════════════════════════════════
+// 수리의뢰서
+// ════════════════════════════════════════
+function addProductRow(model='', serial='', defect='') {
+  const tbody = document.getElementById('productBody');
+  const tr = document.createElement('tr');
+  const id = Date.now() + Math.random();
+  tr.id = 'pr-' + id;
+  tr.innerHTML = `
+    <td><input class="pinput" placeholder="모델명" value="${esc(model)}"></td>
+    <td><input class="pinput" placeholder="제품번호" value="${esc(serial)}"></td>
+    <td><input class="pinput" placeholder="불량내역" value="${esc(defect)}"></td>
+    <td><button class="del-btn" onclick="this.closest('tr').remove()">🗑</button></td>`;
+  tbody.appendChild(tr);
+}
+
+function getProducts() {
+  return Array.from(document.querySelectorAll('#productBody tr')).map(tr => {
+    const ins = tr.querySelectorAll('input');
+    return { model: ins[0]?.value || '', serial: ins[1]?.value || '', defect: ins[2]?.value || '' };
+  }).filter(p => p.model || p.serial || p.defect);
+}
+
+function clearRepairForm() {
+  ['r_outDate','r_inDate','r_storeName','r_tel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('productBody').innerHTML = '';
+  addProductRow();
+}
+
+async function saveRepair() {
+  const outDate = document.getElementById('r_outDate').value;
+  const inDate  = document.getElementById('r_inDate').value;
+  const store   = document.getElementById('r_storeName').value.trim();
+  const tel     = document.getElementById('r_tel').value.trim();
+  const products = getProducts();
+  if (!outDate) { showToast('⚠️ 출고일자를 입력하세요'); return; }
+  if (!products.length) { showToast('⚠️ 제품 정보를 입력하세요'); return; }
+
+  const data = {
+    id: 'AS' + Date.now(),
+    outDate, inDate, storeName: store, tel,
+    products,
+    createdAt: Date.now()
+  };
+
+  try {
+    await db.ref('repairs/' + data.id).set(data);
+    showToast('✅ 저장 완료');
+    clearRepairForm();
+  } catch(e) {
+    showToast('❌ 저장 실패: ' + e.message);
+  }
+}
+
+function renderRepairList() {
+  const kw = (document.getElementById('searchKeyword')?.value || '').toLowerCase();
+  const st = document.getElementById('filterStatus')?.value || '';
+  const list = document.getElementById('repairList');
+
+  let filtered = repairs.filter(r => {
+    const matchKw = !kw || (r.storeName||'').toLowerCase().includes(kw) ||
+      (r.products||[]).some(p => (p.model||'').toLowerCase().includes(kw));
+    const matchSt = !st ||
+      (st === 'received' && r.inDate) ||
+      (st === 'pending' && !r.inDate);
+    return matchKw && matchSt;
+  });
+
+  filtered.sort((a,b) => b.createdAt - a.createdAt);
+
+  if (!filtered.length) {
+    list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);">조건에 맞는 항목이 없습니다.</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(r => {
+    const received = !!r.inDate;
+    const productSummary = (r.products||[]).map(p => p.model).filter(Boolean).join(', ') || '제품 없음';
+    return `<div class="repair-item ${received ? 'received' : ''}" id="ri-${r.id}">
+      <div class="ri-info">
+        <div class="ri-main">${esc(r.storeName||'(가맹점 미입력)')} <span style="font-size:11px;color:var(--muted);font-weight:400;">${esc(r.tel||'')}</span></div>
+        <div class="ri-sub">출고: ${r.outDate||'-'} ${r.inDate?'· 입고: '+r.inDate:''} · ${esc(productSummary)}</div>
+      </div>
+      <span class="ri-status">${received ? '✅ 입고완료' : '⏳ 입고대기'}</span>
+      <div class="ri-actions">
+        ${!received ? `<button class="btn btn-outline btn-sm" onclick="setInDate('${r.id}')">📥 입고처리</button>` : ''}
+        <button class="btn btn-gold btn-sm" onclick="printRepairById('${r.id}')">🖨️</button>
+        <button class="btn btn-navy btn-sm" onclick="openAsCharge('${r.id}')">💰 AS청구</button>
+        <button class="btn btn-red btn-sm" onclick="deleteRepair('${r.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function setInDate(id) {
+  const today = new Date().toISOString().split('T')[0];
+  const date = prompt('입고날짜 입력 (YYYY-MM-DD)', today);
+  if (!date) return;
+  await db.ref('repairs/' + id + '/inDate').set(date);
+  showToast('✅ 입고처리 완료');
+}
+
+async function deleteRepair(id) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  await db.ref('repairs/' + id).remove();
+  showToast('🗑 삭제됨');
+}
+
+function exportRepairExcel() {
+  if (!repairs.length) { showToast('저장된 항목이 없습니다'); return; }
+  const header = ['접수번호','출고일자','입고날짜','가맹점명','연락처','모델명','제품번호','불량내역'];
+  const rows = [];
+  repairs.forEach(r => {
+    if (r.products && r.products.length) {
+      r.products.forEach((p,i) => {
+        rows.push([r.id, r.outDate||'', r.inDate||'', i===0?(r.storeName||''):'', i===0?(r.tel||''):'', p.model||'', p.serial||'', p.defect||'']);
+      });
+    } else {
+      rows.push([r.id, r.outDate||'', r.inDate||'', r.storeName||'', r.tel||'', '','','']);
+    }
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+  XLSX.utils.book_append_sheet(wb, ws, '수리의뢰목록');
+  XLSX.writeFile(wb, '수리의뢰목록_' + new Date().toLocaleDateString('ko-KR').replace(/\./g,'').replace(/ /g,'') + '.xlsx');
+  showToast('📥 엑셀 저장 완료');
+}
+
+// ── 수리의뢰서 출력 ──
+function buildRepairHTML(r) {
+  const products = r.products || [];
+  const rows = Array.from({length: Math.max(6, products.length)}, (_,i) => {
+    const p = products[i] || {};
+    return `<tr style="height:32px"><td>${esc(p.model||'')}</td><td>${esc(p.serial||'')}</td><td>${esc(p.defect||'')}</td></tr>`;
+  }).join('');
+
+  return `<div class="pc">
+    <div class="pc-clearfix">
+      <div class="pc-logo">DS</div>
+      <div class="pc-title">수리의뢰서</div>
+    </div>
+    <table style="margin-bottom:12px;">
+      <tr>
+        <td class="label">출고일자</td><td style="width:35%">${esc(r.outDate||'')}</td>
+        <td class="label" style="width:70px">입고날짜</td><td>${esc(r.inDate||'')}</td>
+      </tr>
+      <tr>
+        <td class="label">대리점명</td><td>대상정보통신</td>
+        <td class="label">사업자번호</td><td><strong>607-10-86981</strong></td>
+      </tr>
+      <tr>
+        <td class="label">주&nbsp;&nbsp;&nbsp;소</td><td>부산시 남구 동명로 146번길 123 (용호동) 1층</td>
+        <td class="label">연락처</td><td><strong>051-903-4561</strong></td>
+      </tr>
+    </table>
+    <table>
+      <thead><tr>
+        <td class="section-title" style="width:15%">모델명</td>
+        <td class="section-title" style="width:28%">제품번호</td>
+        <td class="section-title">불량내역</td>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function printRepair() {
+  const r = {
+    outDate: document.getElementById('r_outDate').value,
+    inDate: document.getElementById('r_inDate').value,
+    products: getProducts()
+  };
+  document.getElementById('printArea').innerHTML = buildRepairHTML(r);
+  window.print();
+}
+
+function printRepairById(id) {
+  const r = repairs.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('printArea').innerHTML = buildRepairHTML(r);
+  window.print();
+}
+
+// ── AS 청구서 ──
+function openAsCharge(id) {
+  const r = repairs.find(x => x.id === id);
+  if (!r) return;
+  const amt = prompt('AS 청구금액 입력 (원)', '');
+  if (amt === null) return;
+  const amount = Number(String(amt).replace(/,/g,'')) || 0;
+  printAsCharge(r, amount);
+}
+
+function printAsCharge(r, amount) {
+  const products = (r.products||[]);
+  const rows = products.map(p =>
+    `<tr><td>${esc(p.model||'')}</td><td>${esc(p.serial||'')}</td><td>${esc(p.defect||'')}</td></tr>`
+  ).join('') || '<tr><td colspan="3"></td></tr>';
+
+  const vat = Math.round(amount / 11);
+  const supply = amount - vat;
+
+  document.getElementById('printArea').innerHTML = `<div class="pc">
+    <div class="pc-clearfix">
+      <div class="pc-logo">DS</div>
+      <div class="pc-title">AS 청구서</div>
+    </div>
+    <table style="margin-bottom:12px;">
+      <tr><td class="label">발행일자</td><td>${new Date().toLocaleDateString('ko-KR')}</td>
+          <td class="label">가맹점명</td><td>${esc(r.storeName||'')}</td></tr>
+      <tr><td class="label">공급자</td><td>대상정보통신 · 607-10-86981</td>
+          <td class="label">연락처</td><td>051-903-4561</td></tr>
+    </table>
+    <table style="margin-bottom:12px;">
+      <thead><tr>
+        <td class="section-title" style="width:20%">모델명</td>
+        <td class="section-title" style="width:28%">제품번호</td>
+        <td class="section-title">수리내역</td>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <table>
+      <tr><td class="label">공급가액</td><td style="text-align:right;font-family:monospace">${supply.toLocaleString()}원</td>
+          <td class="label">부가세(10%)</td><td style="text-align:right;font-family:monospace">${vat.toLocaleString()}원</td></tr>
+      <tr><td class="label">합계금액</td><td colspan="3" style="text-align:right;font-size:13pt;font-weight:900;font-family:monospace">
+        ￦ ${amount.toLocaleString()}원</td></tr>
+    </table>
+    <p style="margin-top:16px;font-size:8pt;color:#555">※ 본 청구서는 가맹점 제출용입니다. 위 금액을 아래 계좌로 입금해 주시기 바랍니다.</p>
+    <table style="margin-top:8px;">
+      <tr><td class="label">입금은행</td><td>${esc(getSupplier().bank||'')}</td>
+          <td class="label">계좌번호</td><td>${esc(getSupplier().account||'')}</td>
+          <td class="label">예금주</td><td>${esc(getSupplier().holder||'')}</td></tr>
+    </table>
+  </div>`;
+  window.print();
+}
+
+// ════════════════════════════════════════
+// 견적서
+// ════════════════════════════════════════
+function getSupplier() {
+  return {
+    name:    document.getElementById('sup_name')?.value    || '대상정보통신',
+    bizno:   document.getElementById('sup_bizno')?.value   || '607-10-86981',
+    ceo:     document.getElementById('sup_ceo')?.value     || '김진선',
+    tel:     document.getElementById('sup_tel')?.value     || '051-903-4561',
+    addr:    document.getElementById('sup_addr')?.value    || '',
+    bank:    document.getElementById('sup_bank')?.value    || '',
+    account: document.getElementById('sup_account')?.value || '',
+    holder:  document.getElementById('sup_holder')?.value  || '',
+  };
+}
+
+async function saveSupplier() {
+  const sup = getSupplier();
+  try {
+    await db.ref('settings/supplier').set(sup);
+    showToast('✅ 공급자 정보 저장됨');
+  } catch(e) {
+    showToast('❌ 저장 실패');
+  }
+}
+
+async function loadSupplier() {
+  try {
+    const snap = await db.ref('settings/supplier').once('value');
+    const sup = snap.val();
+    if (!sup) return;
+    ['name','bizno','ceo','tel','addr','bank','account','holder'].forEach(k => {
+      const el = document.getElementById('sup_' + k);
+      if (el && sup[k]) el.value = sup[k];
+    });
+  } catch(e) {}
+}
+
+function addEstimateRow(name='', qty=1, price=0) {
+  const tbody = document.getElementById('estimateBody');
+  const tr = document.createElement('tr');
+  const id = Date.now() + Math.random();
+  tr.innerHTML = `
+    <td><input class="pinput" placeholder="품명" value="${esc(name)}" oninput="calcEstimate()"></td>
+    <td><input class="pinput" type="number" min="1" value="${qty}" style="text-align:center" oninput="calcEstimate()"></td>
+    <td><input class="pinput" type="number" min="0" value="${price}" style="text-align:right" oninput="calcEstimate()"></td>
+    <td><input class="pinput" readonly style="background:#f0f0f0;text-align:right" id="eamt-${id}"></td>
+    <td><button class="del-btn" onclick="this.closest('tr').remove();calcEstimate()">🗑</button></td>`;
+  tbody.appendChild(tr);
+  calcEstimate();
+}
+
+function calcEstimate() {
+  const vatMode = document.querySelector('input[name="vatMode"]:checked')?.value || 'exclude';
+  let totalAmount = 0;
+
+  document.querySelectorAll('#estimateBody tr').forEach(tr => {
+    const ins = tr.querySelectorAll('input');
+    const qty   = Number(ins[1]?.value) || 0;
+    const price = Number(ins[2]?.value) || 0;
+    const amt   = qty * price;
+    const amtEl = tr.querySelector('[id^="eamt-"]');
+    if (amtEl) amtEl.value = amt.toLocaleString() + '원';
+    totalAmount += amt;
+  });
+
+  let supply, vat, total;
+  if (vatMode === 'include') {
+    // 입력가가 부가세 포함
+    vat     = Math.round(totalAmount / 11);
+    supply  = totalAmount - vat;
+    total   = totalAmount;
+  } else {
+    // 부가세 별도
+    supply  = totalAmount;
+    vat     = Math.round(totalAmount * 0.1);
+    total   = totalAmount + vat;
+  }
+
+  document.getElementById('sumSupply').textContent = supply.toLocaleString() + '원';
+  document.getElementById('sumVat').textContent    = vat.toLocaleString() + '원';
+  document.getElementById('sumTotal').textContent  = total.toLocaleString() + '원';
+}
+
+function clearEstimateForm() {
+  ['e_date','e_valid','e_client','e_manager','e_note'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('estimateBody').innerHTML = '';
+  addEstimateRow();
+  calcEstimate();
+}
+
+function getEstimateItems() {
+  return Array.from(document.querySelectorAll('#estimateBody tr')).map(tr => {
+    const ins = tr.querySelectorAll('input');
+    return { name: ins[0]?.value||'', qty: Number(ins[1]?.value)||0, price: Number(ins[2]?.value)||0 };
+  }).filter(i => i.name || i.price);
+}
+
+function printEstimate() {
+  const sup     = getSupplier();
+  const client  = document.getElementById('e_client').value.trim();
+  const date    = document.getElementById('e_date').value;
+  const valid   = document.getElementById('e_valid').value;
+  const manager = document.getElementById('e_manager').value;
+  const note    = document.getElementById('e_note').value;
+  const items   = getEstimateItems();
+  const vatMode = document.querySelector('input[name="vatMode"]:checked')?.value || 'exclude';
+
+  if (!client) { showToast('⚠️ 수신자(가맹점)를 입력하세요'); return; }
+  if (!items.length) { showToast('⚠️ 품목을 입력하세요'); return; }
+
+  let totalAmount = items.reduce((s,i) => s + i.qty * i.price, 0);
+  let supply, vat, total;
+  if (vatMode === 'include') {
+    vat = Math.round(totalAmount / 11); supply = totalAmount - vat; total = totalAmount;
+  } else {
+    supply = totalAmount; vat = Math.round(totalAmount * 0.1); total = totalAmount + vat;
+  }
+
+  const itemRows = items.map(i => `<tr>
+    <td>${esc(i.name)}</td>
+    <td style="text-align:center">${i.qty}</td>
+    <td style="text-align:right;font-family:monospace">${i.price.toLocaleString()}</td>
+    <td style="text-align:right;font-family:monospace">${(i.qty*i.price).toLocaleString()}</td>
+  </tr>`).join('');
+
+  document.getElementById('printArea').innerHTML = `<div class="pc">
+    <div class="pc-clearfix">
+      <div class="pc-logo">DS</div>
+      <div class="pc-title">견&nbsp;&nbsp;적&nbsp;&nbsp;서</div>
+    </div>
+    <table style="margin-bottom:10px;">
+      <tr>
+        <td class="label">수&nbsp;&nbsp;신</td><td style="width:35%;font-weight:700;font-size:11pt">${esc(client)}</td>
+        <td class="label" style="width:70px">견적일자</td><td>${esc(date)}</td>
+      </tr>
+      <tr>
+        <td class="label">담당자</td><td>${esc(manager)}</td>
+        <td class="label">유효기간</td><td>${esc(valid)}</td>
+      </tr>
+    </table>
+    <table style="margin-bottom:10px;">
+      <tr>
+        <td class="section-title" colspan="4">공급자 정보</td>
+      </tr>
+      <tr>
+        <td class="label">상&nbsp;&nbsp;호</td><td>${esc(sup.name)}</td>
+        <td class="label">사업자번호</td><td>${esc(sup.bizno)}</td>
+      </tr>
+      <tr>
+        <td class="label">대표자</td><td>${esc(sup.ceo)}</td>
+        <td class="label">연락처</td><td>${esc(sup.tel)}</td>
+      </tr>
+      <tr>
+        <td class="label">주&nbsp;&nbsp;소</td><td colspan="3">${esc(sup.addr)}</td>
+      </tr>
+    </table>
+    <table style="margin-bottom:10px;">
+      <thead><tr>
+        <td class="section-title">품명</td>
+        <td class="section-title" style="width:60px;text-align:center">수량</td>
+        <td class="section-title" style="width:100px;text-align:right">단가</td>
+        <td class="section-title" style="width:110px;text-align:right">금액</td>
+      </tr></thead>
+      <tbody>${itemRows}</tbody>
+    </table>
+    <table style="margin-bottom:10px;">
+      <tr><td class="label">공급가액</td><td style="text-align:right;font-family:monospace">${supply.toLocaleString()}원</td>
+          <td class="label">부가세(10%)</td><td style="text-align:right;font-family:monospace">${vat.toLocaleString()}원</td></tr>
+      <tr><td class="label">합&nbsp;계</td><td colspan="3" style="text-align:right;font-size:13pt;font-weight:900;font-family:monospace">
+        ￦ ${total.toLocaleString()}원 (VAT ${vatMode==='include'?'포함':'별도'})</td></tr>
+    </table>
+    ${sup.bank ? `<table>
+      <tr><td class="label">입금은행</td><td>${esc(sup.bank)}</td>
+          <td class="label">계좌번호</td><td>${esc(sup.account)}</td>
+          <td class="label">예금주</td><td>${esc(sup.holder)}</td></tr>
+    </table>` : ''}
+    ${note ? `<p style="margin-top:10px;font-size:8.5pt">※ ${esc(note)}</p>` : ''}
+  </div>`;
+  window.print();
+}
+
+// ── 유틸 ──
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Firebase 실시간 연동 ──
+db.ref('repairs').on('value', snap => {
+  const data = snap.val();
+  repairs = data ? Object.values(data).sort((a,b) => b.createdAt - a.createdAt) : [];
+  renderRepairList();
+});
+
+// ── 초기화 ──
+function init() {
+  document.getElementById('r_outDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('e_date').value    = new Date().toISOString().split('T')[0];
+  document.getElementById('e_valid').value   = '견적일로부터 30일';
+  addProductRow();
+  addEstimateRow();
+  calcEstimate();
+  loadSupplier();
+}
+init();
+</script>
+</body>
+</html>
