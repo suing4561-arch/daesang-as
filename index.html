@@ -674,6 +674,8 @@ db.ref('repairs').on('value',snap=>{
   repairs=data?Object.values(data).sort((a,b)=>b.createdAt-a.createdAt):[];
   renderRepairList();
 },err=>{
+  const list=document.getElementById('repairList');
+  if(list) list.innerHTML='<div style="text-align:center;padding:28px;color:var(--red);font-weight:700;">Firebase 권한 오류로 수리의뢰 목록을 불러오지 못했습니다.<br><span style="font-size:12px;color:var(--muted);font-weight:500;">데이터가 삭제된 것이 아니라 DB 규칙에서 접근이 차단된 상태입니다.</span></div>';
   showToast('❌ 수리의뢰 목록 불러오기 실패: '+err.message);
 });
 
