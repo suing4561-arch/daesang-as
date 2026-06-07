@@ -548,7 +548,7 @@ async function saveRepair(){
   const id=editingRepairId||'AS'+Date.now();
   const data={id,outDate,inDate:document.getElementById('r_inDate').value,
     storeName:document.getElementById('r_storeName').value.trim(),
-    tel:document.getElementById('r_tel').value.trim(),products,createdAt:prev?.createdAt||Date.now(),updatedAt:Date.now()};
+    tel:document.getElementById('r_tel').value.trim(),products,createdAt:prev?.createdAt||Date.now()};
   try{await db.ref('repairs/'+data.id).set(data);showToast(editingRepairId?'✅ 수정 완료':'✅ 저장 완료');clearRepairForm();}
   catch(e){showToast('❌ 저장 실패: '+e.message);}
 }
@@ -673,6 +673,8 @@ db.ref('repairs').on('value',snap=>{
   const data=snap.val();
   repairs=data?Object.values(data).sort((a,b)=>b.createdAt-a.createdAt):[];
   renderRepairList();
+},err=>{
+  showToast('❌ 수리의뢰 목록 불러오기 실패: '+err.message);
 });
 
 // ── 초기화 ──
