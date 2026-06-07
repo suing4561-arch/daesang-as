@@ -1,5 +1,33 @@
 {
   "rules": {
+    "knowledge": {
+      ".read": true,
+      ".write": true
+    },
+    "cms": {
+      ".read": true,
+      ".write": true
+    },
+    "drivers": {
+      ".read": true,
+      ".write": true
+    },
+    "parcels": {
+      ".read": true,
+      ".write": true
+    },
+    "schedules": {
+      ".read": true,
+      ".write": true
+    },
+    "sms_inbox": {
+      ".read": true,
+      ".write": true
+    },
+    "contract_sync": {
+      ".read": true,
+      ".write": true
+    },
     "repairs": {
       ".read": true,
       ".write": true
