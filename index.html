@@ -548,7 +548,7 @@ async function saveRepair(){
   const id=editingRepairId||'AS'+Date.now();
   const data={id,outDate,inDate:document.getElementById('r_inDate').value,
     storeName:document.getElementById('r_storeName').value.trim(),
-    tel:document.getElementById('r_tel').value.trim(),products,createdAt:prev?.createdAt||Date.now()};
+    tel:document.getElementById('r_tel').value.trim(),products,status:prev?.status||'pending',createdAt:prev?.createdAt||Date.now()};
   try{await db.ref('repairs/'+data.id).set(data);showToast(editingRepairId?'✅ 수정 완료':'✅ 저장 완료');clearRepairForm();}
   catch(e){showToast('❌ 저장 실패: '+e.message);}
 }
@@ -558,12 +558,13 @@ function renderRepairList(){
   const list=document.getElementById('repairList');
   let filtered=repairs.filter(r=>{
     const mkw=!kw||(r.storeName||'').toLowerCase().includes(kw)||(r.products||[]).some(p=>(p.model||'').toLowerCase().includes(kw));
-    const mst=!st||(st==='received'&&r.inDate)||(st==='pending'&&!r.inDate);
+    const done=r.status==='received';
+    const mst=!st||(st==='received'&&done)||(st==='pending'&&!done);
     return mkw&&mst;
   }).sort((a,b)=>b.createdAt-a.createdAt);
   if(!filtered.length){list.innerHTML='<div style="text-align:center;padding:28px;color:var(--muted);">항목이 없습니다.</div>';return;}
   list.innerHTML=filtered.map(r=>{
-    const done=!!r.inDate;
+    const done=r.status==='received';
     const ps=(r.products||[]).map(p=>p.model).filter(Boolean).join(', ')||'제품 미입력';
     return`<div class="repair-item ${done?'received':''}">
       <div class="ri-info">
@@ -585,7 +586,7 @@ async function setInDate(id){
   const today=new Date().toISOString().split('T')[0];
   const d=prompt('입고날짜 (YYYY-MM-DD)',today);
   if(!d)return;
-  await db.ref('repairs/'+id+'/inDate').set(d);
+  await db.ref('repairs/'+id).update({inDate:d,status:'received'});
   showToast('✅ 입고처리 완료');
 }
 async function delRepair(id){
